@@ -1,0 +1,18 @@
+pre_init:
+  - echo "Pre init stage"
+  - echo "It's executed first as is."
+  - "echo 'Sequence {%%n} is substituted with number of nodes: {%n}.'"
+
+node_init:
+  - echo "Node init stage"
+  - echo "This script is executed after pre init stage N times, where N - number of nodes."
+  - "echo 'Init node: {%i} of {%n}'"
+
+post_init:
+  - echo "Post init stage"
+  - echo "This stage is executed after node init stage"
+  - "echo 'Sequence {%%n} is substituted with number of nodes: {%n}.'"
+
+transaction:
+  - echo "This piece of code should perform transaction."
+  - echo "Transfer {%sum} coins from {%from} to {%to}."
