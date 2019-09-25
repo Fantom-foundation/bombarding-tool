@@ -51,16 +51,17 @@ public:
         for (char c : templ) {
             switch (state) {
                 case NORMAL:
-                    if (c == '{')
+                    if (c == '{') {
                         state = OPEN_BRACES;
-                    else
+                    } else {
                         res << c;
+                    }
                     break;
 
                 case OPEN_BRACES:
-                    if (c == '%')
+                    if (c == '%') {
                         state = OPEN_PERCENT;
-                    else {
+                    } else {
                         res << '{' << c;
                         state = NORMAL;
                     }
@@ -69,16 +70,17 @@ public:
                 case OPEN_PERCENT:
                     if (c == '}') {
                         auto it = values.find(tmp.str());
-                        if (it == values.end())
+                        if (it == values.end()) {
                             throw ConfigParseException("Unrecognized token: {%" + tmp.str() + "}");
-                        tmp.clear();
+                        }
+                        tmp.str("");
                         res << it->second;
                         state = NORMAL;
                     } else if (c == '{' || c == '%' || std::isspace(c)) {
                         res << "{%" << tmp.str();
                         if (c != '%')
                             res << c;
-                        tmp.clear();
+                        tmp.str("");
                         state = NORMAL;
                     } else {
                         tmp << c;
@@ -127,6 +129,19 @@ public:
     std::vector<std::string> node_init_script() const
     {
         return get_script("node_init");
+    }
+
+    std::vector<std::string> transaction_script() const
+    {
+        return get_script("transaction");
+    }
+
+    std::vector<std::string> wallet_init_script() const
+    {
+        auto res = get_script("wallet_init");
+        if (res.size() > 1)
+            throw ConfigParseException("Wallet init script must not contain more than one command");
+        return res;
     }
 
 private:

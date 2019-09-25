@@ -13,6 +13,16 @@ post_init:
   - echo "This stage is executed after node init stage"
   - "echo 'Sequence {%%n} is substituted with number of nodes: {%n}.'"
 
+# this script must init a new wallet with sufficient amount of coins inside
+# and print its address
+# I'm not sure yet that it's enough
+# may be some stuff with public and private keys have to be introduced
+wallet_init:
+  - head -c 4096 /dev/urandom | tr -dc A-Za-z0-9 | head -c 24
+
 transaction:
   - echo "This piece of code should perform transaction."
   - echo "Transfer {%sum} coins from {%from} to {%to}."
+
+cleanup:
+  - not yet implemented

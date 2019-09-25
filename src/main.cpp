@@ -1,5 +1,7 @@
 #include <iostream>
 
+#include <chrono>
+
 #include "CLI11.hpp"
 #include "configuration.hpp"
 #include "executor.hpp"
@@ -7,7 +9,8 @@
 
 
 
-void initialize(const blomb::ChainConfig& cfg, blomb::ChainConfigArguments& args) {
+void initialize(const blomb::ChainConfig& cfg, blomb::ChainConfigArguments& args)
+{
     blomb::execute(cfg.pre_init_script());
 
     size_t node_count = std::stoull(args["n"]);
@@ -23,17 +26,20 @@ void initialize(const blomb::ChainConfig& cfg, blomb::ChainConfigArguments& args
 int main(int argc, char* argv[])
 {
     std::string config_file;
-    size_t transaction_count = 0;
-    size_t work_time = 0;
+    size_t max_transaction_count = 0;
+    size_t max_work_time = 0;
+    size_t num_wallets = 10;
 
     blomb::ChainConfigArguments cfg_args;
     CLI::App app{"Blomb - A blockchain bombarding tool"};
 
     app.add_option("-c,--config", config_file, "Blockchain configuration")->required();
-    auto work_time_option = app.add_option("-t,--time", work_time, "Bombarding time in seconds")
+    app.add_option("-t,--time", max_work_time, "Max bombarding time in seconds")
         ->check(CLI::PositiveNumber);
-    auto transaction_count_option = app.add_option("--transactions,-x", transaction_count, "Number of transactions to send")
-        ->check(CLI::PositiveNumber)->excludes(work_time_option);
+    app.add_option("--transactions,-x", max_transaction_count, "Max number of transactions to send")
+        ->check(CLI::PositiveNumber);
+    app.add_option("--wallets,-w", max_transaction_count, "Number of wallets")
+        ->check(CLI::PositiveNumber);
 
     blomb::init_chain_cmd_arguments(app, cfg_args);
 
@@ -43,6 +49,13 @@ int main(int argc, char* argv[])
     cfg.pre_init_script();
 
     initialize(cfg, cfg_args);
+    blomb::Bombarder bombarder{cfg, cfg_args, num_wallets};
+
+    bombarder.start_bombarding(max_transaction_count);
+    if (max_work_time) {
+        std::this_thread::sleep_for(std::chrono::seconds(max_work_time));
+        bombarder.stop_bombarding();
+    }
 
     return 0;
 }
