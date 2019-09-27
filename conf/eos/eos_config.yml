@@ -1,0 +1,53 @@
+pre_init:
+  - wget https://github.com/EOSIO/eos/releases/download/v1.7.0/eosio_1.7.0-1-ubuntu-18.04_amd64.deb &&
+    sudo apt install ./eosio_1.7.0-1-ubuntu-18.04_amd64.deb &&
+    wget https://github.com/EOSIO/eosio.cdt/releases/download/v1.6.1/eosio.cdt_1.6.1-1_amd64.deb &&
+    sudo apt install ./eosio.cdt_1.6.1-1_amd64.deb
+  - "echo 'Sequence {%%n} is substituted with number of nodes: {%n}.'"
+
+node_init:
+  - keosd &&
+    nodeos -e -p eosio \
+    --plugin eosio::producer_plugin \
+    --plugin eosio::chain_api_plugin \
+    --plugin eosio::http_plugin \
+    --plugin eosio::history_plugin \
+    --plugin eosio::history_api_plugin \
+    --access-control-allow-origin='*' \
+    --contracts-console \
+    --http-validate-host=false \
+    --verbose-http-errors >> nodeos.log 2>&1 &
+  - "echo 'Init node: {%i} of {%n}'"
+
+post_init:
+  - PASS_UNLOCK=$(cleos wallet create --to-console | tail -1) &&
+    cleos wallet open &&
+    echo "$PASS_UNLOCK" | cleos wallet unlock &&
+    PASS_PUB_STRING=$(cleos wallet create_key) &&
+    PASS_PUB=${PASS_PUB_STRING##* } &&
+    PASS_PUB="${PASS_PUB%\"}" &&
+    PASS_PUB="${PASS_PUB#\"}" &&
+    echo 5KQwrPbwdL6PhXujxW37FSSQZ1JiwsST4cqQzDeyXtP79zkvFD3 | cleos wallet import &&
+    cleos create account eosio bob ${PASS_PUB} &&
+    cleos create account eosio alice ${PASS_PUB} &&
+    cleos create account eosio hello ${PASS_PUB} -p eosio@active
+  - mkdir hello $$
+    cd hello &&
+    cp ../../conf/eos/smart_contract.cpp . &&
+    eosio-cpp smart_contract.cpp -o hello.wasm &&
+    cleos set contract hello eos -p hello@active
+  - "echo 'Sequence {%%n} is substituted with number of nodes: {%n}.'"
+
+# this script must init a new wallet with sufficient amount of coins inside
+# and print its address
+# I'm not sure yet that it's enough
+# may be some stuff with public and private keys have to be introduced
+wallet_init:
+  - head -c 4096 /dev/urandom | tr -dc A-Za-z0-9 | head -c 24
+
+transaction:
+  - cleos push action hello hi [`shuf -i 1-100 -n 1`] -p bob@active
+
+cleanup:
+  - not yet implemented
+
