@@ -21,6 +21,8 @@ node_init:
 
 post_init:
   - PASS_UNLOCK=$(cleos wallet create --to-console | tail -1) &&
+    PASS_UNLOCK="${PASS_UNLOCK%\"}" &&
+    PASS_UNLOCK="${PASS_UNLOCK#\"}" &&
     cleos wallet open &&
     echo "$PASS_UNLOCK" | cleos wallet unlock &&
     PASS_PUB_STRING=$(cleos wallet create_key) &&
