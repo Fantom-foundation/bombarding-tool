@@ -6,8 +6,8 @@ pre_init:
   - "echo 'Sequence {%%n} is substituted with number of nodes: {%n}.'"
 
 node_init:
-  - keosd &&
-    nodeos -e -p eosio \
+  - keosd &
+  - nodeos -e -p eosio \
     --plugin eosio::producer_plugin \
     --plugin eosio::chain_api_plugin \
     --plugin eosio::http_plugin \
