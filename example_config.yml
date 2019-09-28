@@ -22,7 +22,6 @@ wallet_init:
 
 transaction:
   - echo "This piece of code should perform transaction."
-  - echo "Transfer {%sum} coins from {%from} to {%to}."
 
 cleanup:
   - not yet implemented
