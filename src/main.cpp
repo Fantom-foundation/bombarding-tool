@@ -6,6 +6,7 @@
 #include "configuration.hpp"
 #include "executor.hpp"
 #include "bombarder.hpp"
+#include "load.hpp"
 
 
 

@@ -6,7 +6,7 @@
 
 #include "executor.hpp"
 #include "configuration.hpp"
-
+#include "load.hpp"
 
 
 namespace blomb {
@@ -107,11 +107,19 @@ private:
 
     void bombard(size_t max_transactions)
     {
+        blomb::Load load_meter{};
+        double cpu_usage = 0;
+        double memory_usage = 0;
+        size_t iterations_count = 0;
         for (size_t i = 0;
              !stopped.load(std::memory_order_relaxed) && (!max_transactions || i < max_transactions);
              ++i) {
             perform_transaction();
+            cpu_usage += load_meter.get_cpu_usage();
+            memory_usage += load_meter.get_memory_usage();
+            ++iterations_count;
         }
+        load_meter.print_load(cpu_usage / (double)iterations_count, memory_usage / (double)iterations_count);
     }
 
     const std::string& next_wallet() {
