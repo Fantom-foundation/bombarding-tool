@@ -64,9 +64,10 @@ namespace blomb {
             return percent;
         }
 
-        void print_load(double cpu, double memory) {
+        void print_load(double cpu, double memory, double tps) {
             printf ("CPU usage: %5.2f \n", cpu);
             printf ("Memory usage: %5.2f \n", memory);
+            printf ("Transactions per second: %5.2f \n", tps);
         }
     };
 }

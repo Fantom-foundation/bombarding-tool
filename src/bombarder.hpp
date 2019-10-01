@@ -3,6 +3,7 @@
 #include <thread>
 #include <random>
 #include <atomic>
+#include <ctime>
 
 #include "executor.hpp"
 #include "configuration.hpp"
@@ -111,6 +112,7 @@ private:
         double cpu_usage = 0;
         double memory_usage = 0;
         size_t iterations_count = 0;
+        std::clock_t begin = std::clock();
         for (size_t i = 0;
              !stopped.load(std::memory_order_relaxed) && (!max_transactions || i < max_transactions);
              ++i) {
@@ -119,7 +121,9 @@ private:
             memory_usage += load_meter.get_memory_usage();
             ++iterations_count;
         }
-        load_meter.print_load(cpu_usage / (double)iterations_count, memory_usage / (double)iterations_count);
+        std::clock_t end = std::clock();
+        double elapsed_secs = double(end - begin) / CLOCKS_PER_SEC;
+        load_meter.print_load(cpu_usage / (double)iterations_count, memory_usage / (double)iterations_count, (double)iterations_count / elapsed_secs);
     }
 
     const std::string& next_wallet() {
