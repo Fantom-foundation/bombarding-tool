@@ -13,7 +13,11 @@ cmake --build .
 ```
 
 ### How to use
-See [config example](https://github.com/raid-7/blomb/blob/master/example_config.yml) to bomb your favorite blockchain.
+See [config example](example_config.yml) to bomb your favorite blockchain.
 
 Run `./blomb -h` to find out command line arguments.
 
+Example:
+```sh
+./blomb -c ../example_config.yml -n 3 -x 9096 -t 30
+```
