@@ -17,5 +17,4 @@ script:
   # build test server
   - cmake ..
   - cmake --build .
-  - ./blomb -c ../example_config.yml -n 1 -x 100
-  
+  - ./blomb -c ../conf/ethereum/ethereum-config.yml -n 3 -x 100 
