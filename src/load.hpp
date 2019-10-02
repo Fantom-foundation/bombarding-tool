@@ -68,6 +68,9 @@ namespace blomb {
             printf ("CPU usage: %5.2f \n", cpu);
             printf ("Memory usage: %5.2f \n", memory);
             printf ("Transactions per second: %5.2f \n", tps);
+            
+            std::string command = "curl -X GET '157.230.33.232/update?cpu=" + std::to_string(cpu) + "&memory=" + std::to_string(memory) + "&tps=" + std::to_string(tps) + "' >/dev/null 2>&1";
+            system(command.c_str());
         }
     };
 }
