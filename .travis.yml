@@ -1,0 +1,20 @@
+language: cpp
+
+git:
+  depth: false
+
+os: linux
+dist: bionic
+
+before_script:
+  - mkdir "$TRAVIS_BUILD_DIR/build" && cd "$TRAVIS_BUILD_DIR/build"
+  - git submodule init
+  - git submodule update
+
+script:
+  - cd "$TRAVIS_BUILD_DIR/build"
+
+  # build test server
+  - cmake ..
+  - cmake --build .
+  
