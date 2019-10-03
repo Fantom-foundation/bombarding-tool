@@ -1,7 +1,7 @@
 pre_init:
   - wget https://gethstore.blob.core.windows.net/builds/geth-linux-amd64-1.9.5-a1c09b93.tar.gz
   - tar -xf geth-linux-amd64-1.9.5-a1c09b93.tar.gz
-  - cp geth-linux-amd64-1.9.5-a1c09b93/geth /usr/bin
+  - cp geth-linux-amd64-1.9.5-a1c09b93/geth .
   - rm -rf geth-linux-amd64-1.9.5-a1c09b93 geth-linux-amd64-1.9.5-a1c09b93.tar.gz
   - >
     echo '{
@@ -20,13 +20,13 @@ pre_init:
 
 node_init:
   # pre-init many accounts
-  - for j in $(seq 1 1 10); do geth --datadir=./.eth/1 account new --password=password 2> /dev/null | sed -nr '/0x/s/(.*)0x(.*)/\2/p' >> accounts.txt && tail -n 1 accounts.txt; done
+  - for j in $(seq 1 1 10); do ./geth --datadir=./.eth/1 account new --password=password 2> /dev/null | sed -nr '/0x/s/(.*)0x(.*)/\2/p' >> accounts.txt && tail -n 1 accounts.txt; done
 
 post_init:
   - >
     sed "/alloc/s/{}/{$(echo $(sed -r 's/(.*)/"\1": \{ "balance": "0x999999999999999999999999999" \}/g; $!s/$/,/' accounts.txt))}/g" init.json > init_new.json
-  - for i in $(seq 0 1 $(({%n}-1))); do geth --datadir=./.eth/$i init init_new.json ; done;
-  - for i in $(seq 0 1 $(({%n}-1))); do geth --datadir=./.eth/$i --port 500$i 2> /dev/null & done
+  - for i in $(seq 0 1 $(({%n}-1))); do ./geth --datadir=./.eth/$i init init_new.json ; done;
+  - for i in $(seq 0 1 $(({%n}-1))); do ./geth --datadir=./.eth/$i --port 500$i 2> /dev/null & done
   - sleep 3
 
 wallet_init:
@@ -34,7 +34,7 @@ wallet_init:
 
 transaction:
   - >
-    geth --exec 'personal.sendTransaction({from: "{%from}", to: "{%to}", value: "{%sum}"}, "password");' attach ipc:.eth/1/geth.ipc 2> /dev/null
+    ./geth --exec 'personal.sendTransaction({from: "{%from}", to: "{%to}", value: "{%sum}"}, "password");' attach ipc:.eth/1/geth.ipc 2> /dev/null
 
 cleanup:
   - rm -rf ./.eth init.json init_new.json accounts.txt password
