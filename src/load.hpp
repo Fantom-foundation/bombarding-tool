@@ -19,10 +19,13 @@ namespace blomb {
         }
 
         double get_memory_usage() {
-            return (double) memInfo.avail / (double) memInfo.total;
+            return (double) memInfo.free / (double) memInfo.total;
         }
 
         double get_cpu_usage() {
+#if _WIN32
+            return calculate_cpu_load();
+#else
             double percent;
             FILE *file;
             unsigned long long totalUser, totalUserLow, totalSys, totalIdle, total;
@@ -49,14 +52,15 @@ namespace blomb {
             lastTotalUserLow = totalUserLow;
             lastTotalSys = totalSys;
             lastTotalIdle = totalIdle;
-
-            return calculate_cpu_load();
+            return percent;
+#endif
         }
 
         void print_load(double cpu, double memory, double tps) {
-            printf("CPU usage: %5.2f \n", cpu);
-            printf("Memory usage: %5.2f \n", memory);
-            printf("Transactions per second: %5.2f \n", tps);
+            printf("CPU usage: %5.2f \n"
+                   "Memory usage: %5.2f \n"
+                   "Transactions per second: %5.2f \n",
+                   cpu, memory, tps);
 
             // TODO: Use libcurl or similar
             const std::string command = "curl -X GET '157.230.33.232/update?cpu=" + \
