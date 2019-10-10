@@ -1,40 +1,30 @@
 #pragma once
 
-#include "sys/types.h"
-#include "sys/sysinfo.h"
-#include "stdlib.h"
-#include "stdio.h"
-#include "string.h"
+#include <cstdlib>
+#include <cstdio>
+#include <cstring>
+
+#include "info.h"
 
 namespace blomb {
-    struct sysinfo memInfo;
     static unsigned long long lastTotalUser, lastTotalUserLow, lastTotalSys, lastTotalIdle;
 
     class Load {
+    private:
+        MemInfo memInfo;
+
     public:
         Load() {
-            FILE* file = fopen("/proc/stat", "r");
-            fscanf(file, "cpu %llu %llu %llu %llu", &lastTotalUser, &lastTotalUserLow,
-                   &lastTotalSys, &lastTotalIdle);
-            fclose(file);
+            memInfo = get_mem_info();
         }
 
         double get_memory_usage() {
-            sysinfo (&memInfo);
-            auto totalVirtualMem = memInfo.totalram;
-            totalVirtualMem += memInfo.totalswap;
-            totalVirtualMem *= memInfo.mem_unit;
-
-            auto virtualMemUsed = memInfo.totalram - memInfo.freeram;
-            virtualMemUsed += memInfo.totalswap - memInfo.freeswap;
-            virtualMemUsed *= memInfo.mem_unit;
-
-            return (double)virtualMemUsed / (double)totalVirtualMem;
+            return (double) memInfo.avail / (double) memInfo.total;
         }
 
         double get_cpu_usage() {
             double percent;
-            FILE* file;
+            FILE *file;
             unsigned long long totalUser, totalUserLow, totalSys, totalIdle, total;
 
             file = fopen("/proc/stat", "r");
@@ -43,11 +33,10 @@ namespace blomb {
             fclose(file);
 
             if (totalUser < lastTotalUser || totalUserLow < lastTotalUserLow ||
-                totalSys < lastTotalSys || totalIdle < lastTotalIdle){
+                totalSys < lastTotalSys || totalIdle < lastTotalIdle) {
                 //Overflow detection. Just skip this value.
                 percent = -1.0;
-            }
-            else{
+            } else {
                 total = (totalUser - lastTotalUser) + (totalUserLow - lastTotalUserLow) +
                         (totalSys - lastTotalSys);
                 percent = total;
@@ -61,15 +50,18 @@ namespace blomb {
             lastTotalSys = totalSys;
             lastTotalIdle = totalIdle;
 
-            return percent;
+            return calculate_cpu_load();
         }
 
         void print_load(double cpu, double memory, double tps) {
-            printf ("CPU usage: %5.2f \n", cpu);
-            printf ("Memory usage: %5.2f \n", memory);
-            printf ("Transactions per second: %5.2f \n", tps);
-            
-            std::string command = "curl -X GET '157.230.33.232/update?cpu=" + std::to_string(cpu) + "&memory=" + std::to_string(memory) + "&tps=" + std::to_string(tps) + "' >/dev/null 2>&1";
+            printf("CPU usage: %5.2f \n", cpu);
+            printf("Memory usage: %5.2f \n", memory);
+            printf("Transactions per second: %5.2f \n", tps);
+
+            // TODO: Use libcurl or similar
+            const std::string command = "curl -X GET '157.230.33.232/update?cpu=" + \
+                std::to_string(cpu) + "&memory=" + std::to_string(memory) + \
+                "&tps=" + std::to_string(tps) + "' >/dev/null 2>&1";
             system(command.c_str());
         }
     };
