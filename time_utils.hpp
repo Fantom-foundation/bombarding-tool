@@ -2,6 +2,7 @@
 
 #include <stdint.h>
 #include <exception>
+#include <time.h>
 
 namespace time_utils
 {
@@ -63,32 +64,34 @@ uint64_t cumulative_days_in_months_before(unsigned year, unsigned month)
 }
 
 static inline
-uint64_t parse_datetime(const char *s)
+unsigned slurp_digits(const char *&s, char until)
 {
-    const auto slurp_digits = [&](char until) {
-        unsigned r = 0;
-        while (true) {
-            const char c = *s;
-            ++s;
-            if (c == until)
-                break;
-            const int digit = static_cast<int>(c) - '0';
-            if (digit < 0 || digit > 9) {
-                fprintf(stderr, "Symbol: %c (until '%c')\n", c, until);
-                throw InvalidDateTime{};
-            }
-            r = r * 10 + digit;
+    unsigned r = 0;
+    while (true) {
+        const char c = *s;
+        ++s;
+        if (c == until)
+            break;
+        const int digit = static_cast<int>(c) - '0';
+        if (digit < 0 || digit > 9) {
+            fprintf(stderr, "Symbol: %c (until '%c')\n", c, until);
+            throw InvalidDateTime{};
         }
-        return r;
-    };
+        r = r * 10 + digit;
+    }
+    return r;
+}
 
-    const auto year = slurp_digits('-');
-    const auto month = slurp_digits('-');
-    const auto day = slurp_digits('T');
-    const auto hour = slurp_digits(':');
-    const auto minute = slurp_digits(':');
-    const auto second = slurp_digits('.');
-    const auto nanosecond = slurp_digits('Z');
+static inline
+uint64_t parse_datetime_json(const char *s)
+{
+    const auto year = slurp_digits(s, '-');
+    const auto month = slurp_digits(s, '-');
+    const auto day = slurp_digits(s, 'T');
+    const auto hour = slurp_digits(s, ':');
+    const auto minute = slurp_digits(s, ':');
+    const auto second = slurp_digits(s, '.');
+    const auto nanosecond = slurp_digits(s, 'Z');
 
     const uint64_t total_days =
         cumulative_days_in_years(2000, year) +
@@ -110,6 +113,46 @@ uint64_t parse_datetime(const char *s)
     r += nanosecond;
 
     return r;
+}
+
+static inline
+uint64_t parse_datetime_log(unsigned year, const char *s)
+{
+    const auto month = slurp_digits(s, '-');
+    const auto day = slurp_digits(s, '|');
+    const auto hour = slurp_digits(s, ':');
+    const auto minute = slurp_digits(s, ':');
+    const auto second = slurp_digits(s, '.');
+    const auto millisecond = slurp_digits(s, ']');
+
+    const uint64_t total_days =
+        cumulative_days_in_years(2000, year) +
+        cumulative_days_in_months_before(year, month) +
+        (day - 1);
+
+    uint64_t r = total_days;
+
+    r *= 24;
+    r += hour;
+
+    r *= 60;
+    r += minute;
+
+    r *= 60;
+    r += second;
+
+    r *= 1'000'000'000;
+    r += millisecond * 1'000'000;
+
+    return r;
+}
+
+static
+unsigned current_year()
+{
+    time_t t = time(nullptr);
+    struct tm tm = *localtime(&t);
+    return tm.tm_year + 1900;
 }
 
 }

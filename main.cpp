@@ -8,7 +8,7 @@
 #include <map>
 
 template<class Handler>
-void for_each_log_line(utils::Span span, Handler &&handler)
+void for_each_json_line(utils::Span span, Handler &&handler)
 {
     const char *const end = span.data + span.size;
     const char *const begin = span.data;
@@ -26,7 +26,29 @@ void for_each_log_line(utils::Span span, Handler &&handler)
             break;
         handler(
             utils::Span{p1 + 2, static_cast<size_t>(p2 - p1) - 2},
-            time_utils::parse_datetime(p4 + 1)
+            time_utils::parse_datetime_json(p4 + 1)
+        );
+        ptr = p2 + 1;
+    }
+}
+
+template<class Handler>
+void for_each_log_line(unsigned year, utils::Span span, Handler &&handler)
+{
+    const char *const end = span.data + span.size;
+    const char *const begin = span.data;
+    const char *ptr = begin;
+    while (ptr != end) {
+        const char *p1 = reinterpret_cast<const char *>(::memchr(ptr, '[', end - ptr));
+        if (!p1)
+            break;
+        const char *p2 = reinterpret_cast<const char *>(::memchr(p1, '\n', end - p1));
+        if (!p2)
+            break;
+        enum { OFFSET = 21 };
+        handler(
+            utils::Span{p1 + OFFSET, static_cast<size_t>(p2 - p1) - OFFSET},
+            time_utils::parse_datetime_log(year, p1 + 1)
         );
         ptr = p2 + 1;
     }
@@ -42,7 +64,7 @@ bool span_starts_with(utils::Span span, const char *s)
 static
 void print_usage_and_exit()
 {
-    ::fprintf(stderr, "USAGE: main [-f <datetime>] [-c <ratio>] <JSON log file>...\n");
+    ::fprintf(stderr, "USAGE: main [-f <datetime>] [-c <ratio>] [-j] <log file>...\n");
     ::exit(2);
 }
 
@@ -50,14 +72,22 @@ int main(int argc, char **argv)
 {
     uint64_t from_timestamp = 0;
     double cutoff_ratio = 0.33;
+    unsigned year = time_utils::current_year();
+    bool json = false;
 
-    for (int c; (c = getopt(argc, argv, "f:c:")) != -1;) {
+    for (int c; (c = getopt(argc, argv, "f:c:j")) != -1;) {
         switch (c) {
         case 'f':
-            from_timestamp = time_utils::parse_datetime(optarg);
+            from_timestamp = time_utils::parse_datetime_json(optarg);
             break;
         case 'c':
-            cutoff_ratio = strtod(optarg, nullptr);
+            cutoff_ratio = ::strtod(optarg, nullptr);
+            break;
+        case 'y':
+            year = ::strtoul(optarg, nullptr, 10);
+            break;
+        case 'j':
+            json = true;
             break;
         default:
             print_usage_and_exit();
@@ -68,26 +98,29 @@ int main(int argc, char **argv)
 
     std::map<std::string, uint64_t> eid_to_timestamp;
 
+    const auto handler = [&](utils::Span span, uint64_t timestamp)
+    {
+        if (timestamp < from_timestamp)
+            return;
+        const char *const prefix = "consensus: event is atropos";
+        if (span_starts_with(span, prefix)) {
+            const char *s = span.data + strlen(prefix);
+            while (*s == ' ')
+                ++s;
+            const char *t = s;
+            while (*t != '\\' && *t != '"')
+                ++t;
+            eid_to_timestamp[std::string(s, t - s)] = timestamp;
+        }
+    };
+
     for (int i = optind; i < argc; ++i) {
         auto fd = utils::open_for_reading(argv[i]);
         auto mm = utils::MemoryMap(fd, utils::file_size(fd));
-        for_each_log_line(
-                static_cast<utils::Span>(mm),
-                [&](utils::Span span, uint64_t timestamp)
-        {
-            if (timestamp < from_timestamp)
-                return;
-            const char *const prefix = "consensus: event is atropos";
-            if (span_starts_with(span, prefix)) {
-                const char *s = span.data + strlen(prefix);
-                while (*s == ' ')
-                    ++s;
-                const char *t = s;
-                while (*t != '\\')
-                    ++t;
-                eid_to_timestamp[std::string(s, t - s)] = timestamp;
-            }
-        });
+        if (json)
+            for_each_json_line(static_cast<utils::Span>(mm), handler);
+        else
+            for_each_log_line(year, static_cast<utils::Span>(mm), handler);
     }
 
     std::vector<uint64_t> events;
