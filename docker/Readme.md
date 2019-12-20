@@ -2,7 +2,7 @@
 
 ```
 sudo docker build -t node .
-sudo docker run -p 5050:5050 -p 3000:3000 --rm --name=node node --nousb --port 5050 --rpc --rpcaddr "0.0.0.0" --rpcport 3000 --rpccorsdomain="*" --rpcapi "eth,debug,admin,web3" --fakenet=i/N --bootnodes="enode"
+sudo docker run -p 5050:5050 -p 3000:3000 --rm --name=node node --nousb --port 5050 --rpc --rpcaddr "0.0.0.0" --rpcport 3000 --rpccorsdomain="*" --rpcapi "eth,debug,admin,web3" --verbosity=5 --metrics --fakenet=i/N --bootnodes="enode"
 ```
 Where
   * `i` is a number on your node of `N` nodes in a network, `i=1..N`
