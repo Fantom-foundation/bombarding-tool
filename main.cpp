@@ -68,6 +68,14 @@ void print_usage_and_exit()
     ::exit(2);
 }
 
+static inline
+void slurp_to_eq(const char *&s)
+{
+    while (*s != '=')
+        ++s;
+    ++s;
+}
+
 int main(int argc, char **argv)
 {
     uint64_t from_timestamp = 0;
@@ -96,21 +104,30 @@ int main(int argc, char **argv)
     if (optind == argc)
         print_usage_and_exit();
 
-    std::map<std::string, uint64_t> eid_to_timestamp;
+    struct Metadata
+    {
+        uint64_t timestamp;
+        unsigned ntxns;
+    };
+
+    std::map<std::string, Metadata> eid_to_meta;
 
     const auto handler = [&](utils::Span span, uint64_t timestamp)
     {
         if (timestamp < from_timestamp)
             return;
-        const char *const prefix = "consensus: event is atropos";
+        const char *const prefix = "New block ";
         if (span_starts_with(span, prefix)) {
             const char *s = span.data + strlen(prefix);
-            while (*s == ' ')
-                ++s;
-            const char *t = s;
-            while (*t != '\\' && *t != '"')
-                ++t;
-            eid_to_timestamp[std::string(s, t - s)] = timestamp;
+            slurp_to_eq(s); // index
+            slurp_to_eq(s); // hash
+            const char *hash_start = s;
+            const char *hash_end = reinterpret_cast<const char *>(rawmemchr(s, ' '));
+            slurp_to_eq(s); // fee
+            slurp_to_eq(s); // txs
+            const unsigned ntxns = time_utils::slurp_digits(s, /*until=*/' ');
+            eid_to_meta[std::string(hash_start, hash_end - hash_start)] =
+                {timestamp, ntxns};
         }
     };
 
@@ -124,8 +141,9 @@ int main(int argc, char **argv)
     }
 
     std::vector<uint64_t> events;
-    for (const auto &kv : eid_to_timestamp)
-        events.push_back(kv.second);
+    for (const auto &kv : eid_to_meta)
+        for (unsigned i = 0; i < kv.second.ntxns; ++i)
+            events.push_back(kv.second.timestamp);
     std::sort(events.begin(), events.end());
 
     const size_t nevents = events.size();
@@ -139,8 +157,8 @@ int main(int argc, char **argv)
             const size_t ev_delta = i - j;
             if (ev_delta < cutoff) continue;
             const uint64_t time_delta = events[i] - events[j];
-            const double tpns = static_cast<double>(time_delta) / ev_delta;
-            const double tps = tpns * 1e-9;
+            const double tpns = ev_delta / static_cast<double>(time_delta);
+            const double tps = tpns * 1e9;
             if (r < tps) {
                 r = tps;
                 r_nev = ev_delta;
