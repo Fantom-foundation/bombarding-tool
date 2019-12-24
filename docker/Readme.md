@@ -1,4 +1,7 @@
-## To run lachesis follow:
+## Way 1: automatic script
+Run `./deploy.sh ip1 ip2 ipn` with needed number of IPs. Node with ip1 will be bootnode
+
+## Way 2: deploy on each server manually
 
 ```
 sudo docker build -t node .
