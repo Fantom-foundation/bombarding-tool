@@ -1,19 +1,11 @@
 #!/usr/bin/env bash
 
-nodes=(
-    3.133.86.27
-    3.134.107.215
-    3.134.90.185
-)
+N=$#
 
-N=3
-
-for ((i=0;i<$N;i+=1))
-do
-    path=$(ssh -i ~/.ssh/bombarder.pem ubuntu@${nodes[$i]} sudo cp $(sudo docker inspect --format='{{.LogPath}}' node) node-${i}.log 2> /dev/null)
-    scp -i ~/.ssh/bombarder.pem ubuntu@${nodes[$i]}:~/bombarding-tool/docker/node-${i}.log .
+i=0
+for ip in $@; do
+    let "i+=1"
+    path=$(ssh -i ~/.ssh/bombarder.pem ubuntu@$ip "sudo docker inspect --format='{{.LogPath}}' node" 2> /dev/null)
+    ssh -i ~/.ssh/bombarder.pem ubuntu@$ip "sudo cp $path ~/node-$i.log && sudo chmod 777 ~/node-$i.log"
+    scp -i ~/.ssh/bombarder.pem ubuntu@$ip:~/node-$i.log node-$i.log
 done
-
-# scp -i .ssh/bombarder.pem ubuntu@3.133.86.27:~/bombarding-tool/docker/node-0.log .
-# scp -i .ssh/bombarder.pem ubuntu@3.134.107.215:~/bombarding-tool/docker/node-1.log .
-# scp -i .ssh/bombarder.pem ubuntu@3.134.90.185:~/bombarding-tool/docker/node-2.log .
