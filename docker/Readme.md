@@ -1,4 +1,11 @@
-## To run lachesis follow:
+## Way 1: automatic script
+Run `./deploy.sh ip1 ip2 ipn` with needed number of IPs. Node with ip1 will be bootnode
+
+After running `tx-storm` you can download logs with `./download_logs.sh ip1 ip2 ipn`
+
+Note that both scripts require `.pem` file in `~/.ssh/bombarder.pem`
+
+## Way 2: deploy on each server manually
 
 ```
 sudo docker build -t node .
