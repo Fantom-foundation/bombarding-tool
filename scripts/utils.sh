@@ -49,3 +49,27 @@ get_instance_ips() {
 
     echo "$INSTANCE_IPS"
 }
+
+attach_and_exec() {
+    local IP=$1
+    local CMD=$2
+
+    for attempt in $(seq 2)
+    do
+        if (( attempt > 5 ));
+        then
+            echo "  - attempt ${attempt}: " >&2
+        fi;
+
+        res=$(ssh -i ~/.ssh/bombarder.pem ubuntu@"${IP}" "${CMD}")
+        if [ $? -eq 0 ]
+        then
+            echo $res
+            return 0
+        else
+            sleep 8
+        fi
+    done
+    echo "Failed to attach to ${IP}" >&2
+    return 1
+}

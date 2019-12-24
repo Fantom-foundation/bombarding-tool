@@ -9,19 +9,27 @@ set -e
 
 INSTANCE_IDS=$(run_instances $1)
 INSTANCE_IPS=$(get_instance_ips $INSTANCE_IDS)
+INSTANCE_IPS=`echo $INSTANCE_IPS`
 
 echo "Ids:" $INSTANCE_IDS
 echo "Ips:" $INSTANCE_IPS
 
-# TODO: add code to setup testnet on $INSTANCE_IPS here
+# we cannot atomatically deploy bombarder yet
+# BOMB_ID=$(run_instances 1)
+# so hardcode
+BOMB_ID="i-04a0dc2d116f32723"
 
-BOMB_ID=$(run_instances 1)
 BOMB_IP=$(get_instance_ips $BOMB_ID)
 
 echo "Bombarder id:" $BOMB_ID
 echo "Bombarder ip:" $BOMB_IP
 
-# TODO: add code to setup bombarder on $BOMB_IP here
+echo "Wait 40 seconds"
+sleep 40
+echo "Start deployment"
+
+./deploy.sh $INSTANCE_IPS
+attach_and_exec $BOMB_IP "NODES=$INSTANCE_IPS ~/bombard.sh"
 
 echo "Bombarding is successfully set up"
 echo "To finish bombarding call"

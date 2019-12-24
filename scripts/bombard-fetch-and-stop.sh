@@ -16,7 +16,14 @@ BOMB_IP=$(get_instance_ips $BOMB_ID)
 echo "Bombarder id:" $BOMB_ID
 echo "Bombarder ip:" $BOMB_IP
 
-# TODO: fetch logs here
+./download_logs.sh $INSTANCE_IPS
+
+# stop tx-storm process
+attach_and_exec $BOMB_IP "sudo killall tx-storm"
+
+# DO NOT STOP BOMBARDER NODE
+# because we cannot atomatically deploy it yet
+BOMB_ID=""
 
 aws ec2 stop-instances --instance-ids $INSTANCE_IDS $BOMB_ID || true
 aws ec2 terminate-instances --instance-ids $INSTANCE_IDS $BOMB_ID
