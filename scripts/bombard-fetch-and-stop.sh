@@ -16,10 +16,12 @@ BOMB_IP=$(get_instance_ips $BOMB_ID)
 echo "Bombarder id:" $BOMB_ID
 echo "Bombarder ip:" $BOMB_IP
 
-./download_logs.sh $INSTANCE_IPS
+set +e
 
 # stop tx-storm process
 attach_and_exec $BOMB_IP "sudo killall tx-storm"
+
+./download_logs.sh $INSTANCE_IPS
 
 # DO NOT STOP BOMBARDER NODE
 # because we cannot atomatically deploy it yet

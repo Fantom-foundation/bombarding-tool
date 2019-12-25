@@ -9,7 +9,7 @@ set -e
 
 INSTANCE_IDS=$(run_instances $1)
 INSTANCE_IPS=$(get_instance_ips $INSTANCE_IDS)
-INSTANCE_IPS=`echo $INSTANCE_IPS`
+INSTANCE_IPS=`echo $INSTANCE_IPS` # to one line
 
 echo "Ids:" $INSTANCE_IDS
 echo "Ips:" $INSTANCE_IPS
@@ -29,7 +29,7 @@ sleep 40
 echo "Start deployment"
 
 ./deploy.sh $INSTANCE_IPS
-attach_and_exec $BOMB_IP "NODES=$INSTANCE_IPS ~/bombard.sh"
+attach_and_exec $BOMB_IP "NODES=\"$INSTANCE_IPS\" ~/bombard.sh" &>storm.log &
 
 echo "Bombarding is successfully set up"
 echo "To finish bombarding call"

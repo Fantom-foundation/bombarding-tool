@@ -61,7 +61,7 @@ attach_and_exec() {
             echo "  - attempt ${attempt}: " >&2
         fi;
 
-        res=$(ssh -i ~/.ssh/bombarder.pem ubuntu@"${IP}" "${CMD}")
+        res=$(ssh -o "StrictHostKeyChecking no" -i ~/.ssh/bombarder.pem ubuntu@"${IP}" "${CMD}")
         if [ $? -eq 0 ]
         then
             echo $res
