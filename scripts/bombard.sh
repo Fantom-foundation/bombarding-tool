@@ -7,30 +7,43 @@
 source utils.sh
 set -e
 
-INSTANCE_IDS=$(run_instances $1)
+CFG_FILE="$1"
+N_NODES="$2"
+
+if [[ -z "$CFG_FILE" ]]; then
+    die "Usage: ./bombard.sh config.sh num_nodes"
+fi
+if [[ -z "$N_NODES" ]]; then
+    die "Usage: ./bombard.sh config.sh num_nodes"
+fi
+
+source "$CFG_FILE"
+
+
+INSTANCE_IDS=$(run_instances $N_NODES $INSTANCE_TYPE)
 INSTANCE_IPS=$(get_instance_ips $INSTANCE_IDS)
-INSTANCE_IPS=`echo $INSTANCE_IPS` # to one line
 
 echo "Ids:" $INSTANCE_IDS
-echo "Ips:" $INSTANCE_IPS
+echo "IPs:" $INSTANCE_IPS
 
-# we cannot atomatically deploy bombarder yet
-# BOMB_ID=$(run_instances 1)
-# so hardcode
-BOMB_ID="i-04a0dc2d116f32723"
+if [[ -z "$DEFAULT_BOMB_ID" ]]; then
+    BOMB_ID=$(run_instances 1)
+else
+    BOMB_ID="$DEFAULT_BOMB_ID"
+fi
 
 BOMB_IP=$(get_instance_ips $BOMB_ID)
 
 echo "Bombarder id:" $BOMB_ID
 echo "Bombarder ip:" $BOMB_IP
 
-echo "Wait 40 seconds"
-sleep 40
+echo "Wait $BOOT_DELAY seconds"
+sleep $BOOT_DELAY
 echo "Start deployment"
 
-./deploy.sh $INSTANCE_IPS
+./deploy.sh "$CFG_FILE" $INSTANCE_IPS
 attach_and_exec $BOMB_IP "NODES=\"$INSTANCE_IPS\" ~/bombard.sh" &>storm.log &
 
 echo "Bombarding is successfully set up"
 echo "To finish bombarding call"
-echo "bombard-fetch-and-stop.sh" $BOMB_ID $INSTANCE_IDS
+echo "bombard-fetch-and-stop.sh" "$CFG_FILE" $BOMB_ID $INSTANCE_IDS
