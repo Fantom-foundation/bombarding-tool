@@ -14,7 +14,8 @@ aws ec2 import-key-pair --key-name bombarder --public-key-material file://~/.ssh
 Start bombarding:
 
 ```sh
-./bombard.sh sample-config.sh N # N - number of nodes
+./bombard.sh sample-config.sh N [M] # N - number of nodes, M - number of bombarders
+# M <= N
 ```
 
 Expect the following lines in the end of output (instance ids will be different):
