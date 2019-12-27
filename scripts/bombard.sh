@@ -42,7 +42,9 @@ sleep $BOOT_DELAY
 echo "Start deployment"
 
 ./deploy.sh "$CFG_FILE" $INSTANCE_IPS
-attach_and_exec $BOMB_IP "NODES=\"$INSTANCE_IPS\" ~/bombard.sh" &>storm.log &
+
+ENTRY_NODE_IP=`echo "$INSTANCE_IPS" | awk '{ print($1); exit; }' | tr -d '\n'`
+attach_and_exec $BOMB_IP "NODES=\"$ENTRY_NODE_IP\" ~/bombard.sh" &>storm.log &
 
 echo "Bombarding is successfully set up"
 echo "To finish bombarding call"
