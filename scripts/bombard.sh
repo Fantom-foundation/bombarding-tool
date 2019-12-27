@@ -9,12 +9,16 @@ set -e
 
 CFG_FILE="$1"
 N_NODES="$2"
+NUM_BOMBARDERS="$3"
 
 if [[ -z "$CFG_FILE" ]]; then
-    die "Usage: ./bombard.sh config.sh num_nodes"
+    die "Usage: ./bombard.sh config.sh num_nodes [num_bombarders]"
 fi
 if [[ -z "$N_NODES" ]]; then
-    die "Usage: ./bombard.sh config.sh num_nodes"
+    die "Usage: ./bombard.sh config.sh num_nodes [num_bombarders]"
+fi
+if [[ -z "$NUM_BOMBARDERS" ]]; then
+    NUM_BOMBARDERS=1
 fi
 
 source "$CFG_FILE"
@@ -43,8 +47,12 @@ echo "Start deployment"
 
 ./deploy.sh "$CFG_FILE" $INSTANCE_IPS
 
-ENTRY_NODE_IP=`echo "$INSTANCE_IPS" | awk '{ print($1); exit; }' | tr -d '\n'`
-attach_and_exec $BOMB_IP "NODES=\"$ENTRY_NODE_IP\" ~/bombard.sh" &>storm.log &
+res=$(attach_and_exec $BOMB_IP 'sudo apt-get -y update && sudo apt-get -y install docker.io')
+echo "Docker installed onto bombarder"
+
+ENTRY_NODE_IPS=`echo "$INSTANCE_IPS" | awk 'BEGIN { n='$NUM_BOMBARDERS'; RS="\\\s+"; ORS=" "; } { n-=1; print $1; if (n==0) exit; }'`
+echo "Bombard nodes on $ENTRY_NODE_IPS"
+attach_and_exec $BOMB_IP "sudo docker run -i --rm --name=bomb $BOMB_DOCKER_IMAGE $ENTRY_NODE_IPS" &>storm.log &
 
 echo "Bombarding is successfully set up"
 echo "To finish bombarding call"

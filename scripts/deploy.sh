@@ -23,7 +23,7 @@ for ip in $IPS; do
     fi
 
     res=$(attach_and_exec $ip 'sudo apt-get -y update && sudo apt-get -y install docker.io')
-    echo -e "Repo cloned"
+    echo -e "Docker installed"
     if ((i==1)); then
         res=$(attach_and_exec $ip "sudo docker run -d -p 5050:5050 -p 3000:3000 --rm --name=node $DOCKER_IMAGE --nousb --port 5050 --rpc --rpcaddr 0.0.0.0 --rpcport 3000 --rpccorsdomain='*' --rpcapi 'eth,debug,admin,web3' --verbosity=5 --metrics --fakenet=$i/$N")
     else

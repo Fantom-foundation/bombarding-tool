@@ -28,7 +28,7 @@ echo "Bombarder ip:" $BOMB_IP
 set +e
 
 # stop tx-storm process
-attach_and_exec $BOMB_IP "sudo killall tx-storm"
+attach_and_exec $BOMB_IP "sudo docker kill bomb"
 
 ./download_logs.sh "$CFG_FILE" $INSTANCE_IPS
 
