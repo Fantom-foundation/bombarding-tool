@@ -91,7 +91,7 @@ def main
     opt_parser = OptionParser.new
     opt_parser.banner = "Usage: crla [options] LOGFILE [LOGFILE ...]"
     opt_parser.on("-y YEAR", "Set year") { |s| assumed_year = s.to_i }
-    opt_parser.on("-r RATIO[,RATIO...]", "Set ratio(s)") { |s| ratios = s.split(',').map &.to_i }
+    opt_parser.on("-r RATIO[,RATIO...]", "Set ratio(s)") { |s| ratios = s.split(',').map &.to_f }
     opt_parser.parse
     if ARGV.empty?
         STDERR.puts opt_parser
